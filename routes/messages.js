@@ -5,6 +5,7 @@ const router = new Router();
 const { ensureLoggedIn, ensureCorrectUser } = require("../middleware/auth");
 const Message = require("../models/message")
 const User = require("../models/user") //TODO: delete if unnecessary
+const {UnauthorizedError} = require("../expressError");
 
 /** GET /:id - get detail of message.
  *
@@ -21,10 +22,12 @@ const User = require("../models/user") //TODO: delete if unnecessary
 router.get('/:id', ensureLoggedIn, async function(req, res, next) {
   let m = await Message.get(req.params.id)
   console.log('global user is ', res.locals.user);
+
+  if (res.locals.user === m.from_user || res.locals.user === m.to_user) {
+    return res.json({message: m})
+  }
   
-  return res.json({"hi": "hello"})
-  // m.from_username.username
-  // m.to_username.username
+  throw new UnauthorizedError()
 })
 
 /** POST / - post message.
@@ -41,6 +44,7 @@ router.post('/', ensureLoggedIn, async function(req, res, next) {
   return res.json({ message })
 })
 
+
 /** POST/:id/read - mark message as read:
  *
  *  => {message: {id, read_at}}
@@ -48,6 +52,19 @@ router.post('/', ensureLoggedIn, async function(req, res, next) {
  * Makes sure that the only the intended recipient can mark as read.
  *
  **/
+router.post('/:id/read', ensureLoggedIn, async function(req, res, next) {
+  console.log("hit route");
+  
+  let messageInfo = await Message.get(req.params.id);
+  console.log("messageInfo.to_user", messageInfo.to_user);
+  console.log("localUser", res.locals.user)
+  if (res.locals.user === messageInfo.to_user.username) {
+    let message = await Message.markRead(req.params.id);
+    return res.json({message})  
+  }
+   
+  throw new UnauthorizedError()
+})
 
 
 module.exports = router;

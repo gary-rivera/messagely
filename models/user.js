@@ -107,15 +107,13 @@ class User {
       WHERE from_username = $1
     `, [username])
 
-    console.log()
-
     let messages = result.rows.map(m => {
       return {
-      id:m.id, 
-      to_user:{username:m.username, first_name:m.first_name, last_name:m.last_name, phone:m.phone},
-      body:m.body, 
-      sent_at:m.sent_at, 
-      read_at:m.read_at
+        id:m.id, 
+        to_user:{username:m.username, first_name:m.first_name, last_name:m.last_name, phone:m.phone},
+        body:m.body, 
+        sent_at:m.sent_at, 
+        read_at:m.read_at
       }
     })
     return messages
@@ -140,11 +138,11 @@ class User {
 
   let messages = result.rows.map(m => {
     return {
-    id:m.id, 
-    from_user:{username:m.username, first_name:m.first_name, last_name:m.last_name, phone:m.phone},
-    body:m.body, 
-    sent_at:m.sent_at, 
-    read_at:m.read_at
+      id:m.id, 
+      from_user:{username:m.username, first_name:m.first_name, last_name:m.last_name, phone:m.phone},
+      body:m.body, 
+      sent_at:m.sent_at, 
+      read_at:m.read_at
     }
   })
   return messages
