@@ -1,7 +1,10 @@
 "use strict";
 
 /** User of the site. */
-
+const bcrypt = require("bcrypt");
+const { BCRYPT_WORK_FACTOR } = require("../config")
+const db = require("../db");
+const NotFoundError = require("../expressError")
 class User {
 
   /** Register new user. Returns
@@ -9,16 +12,51 @@ class User {
    */
 
   static async register({ username, password, first_name, last_name, phone }) {
+    // generate hash password
+    let hashed = await bcrypt.hash(password, BCRYPT_WORK_FACTOR);
+
+    // insert user to db
+    const result = await db.query(`
+        INSERT INTO users (username,
+                          password,
+                          first_name,
+                          last_name,
+                          phone,
+                          join_at, 
+                          last_login_at)
+        VALUES ($1, $2, $3, $4, $5, current_timestamp, current_timestamp)
+        RETURNING username, password, first_name, last_name, phone
+    `, [username, hashed, first_name, last_name, phone])
+      
+    const user = result.rows[0];
+    return user
   }
 
   /** Authenticate: is username/password valid? Returns boolean. */
 
   static async authenticate(username, password) {
+    const result = await db.query(`
+      SELECT password
+      FROM users
+      WHERE username = $1
+    `, [username])
+    const user = result.rows[0];
+    if(user) {
+      if (await bcrypt.compare(password, user.password) === true) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /** Update last_login_at for user */
 
   static async updateLoginTimestamp(username) {
+    const result = await db.query(`
+        UPDATE users
+        SET last_login_at = current_timestamp
+          WHERE username = $1
+    `)
   }
 
   /** All: basic info on all users:
