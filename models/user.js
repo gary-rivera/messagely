@@ -56,13 +56,18 @@ class User {
         UPDATE users
         SET last_login_at = current_timestamp
           WHERE username = $1
-    `)
+    `, [username])
   }
 
   /** All: basic info on all users:
    * [{username, first_name, last_name}, ...] */
 
   static async all() {
+    const result = await db.query(`
+      SELECT username, first_name, last_name
+      FROM users
+    `)
+    return result.rows
   }
 
   /** Get: get user by username
@@ -75,6 +80,13 @@ class User {
    *          last_login_at } */
 
   static async get(username) {
+    const result = await db.query(`
+      SELECT username, first_name, last_name, phone, join_at, last_login_at
+      FROM users
+      WHERE username = $1
+    `, [username])
+    const user = result.rows[0];
+    return user
   }
 
   /** Return messages from this user.
@@ -86,6 +98,27 @@ class User {
    */
 
   static async messagesFrom(username) {
+  
+    const result = await db.query(`
+      SELECT m.id, m.to_username, m.body, m.sent_at, m.read_at, 
+      u.username, u.first_name, u.last_name, u.phone
+      FROM messages AS m
+      JOIN users AS u ON u.username = m.to_username
+      WHERE from_username = $1
+    `, [username])
+
+    console.log()
+
+    let messages = result.rows.map(m => {
+      return {
+      id:m.id, 
+      to_user:{username:m.username, first_name:m.first_name, last_name:m.last_name, phone:m.phone},
+      body:m.body, 
+      sent_at:m.sent_at, 
+      read_at:m.read_at
+      }
+    })
+    return messages
   }
 
   /** Return messages to this user.
@@ -97,6 +130,24 @@ class User {
    */
 
   static async messagesTo(username) {
+    const result = await db.query(`
+    SELECT m.id, m.from_username, m.body, m.sent_at, m.read_at, 
+    u.username, u.first_name, u.last_name, u.phone
+    FROM messages AS m
+    JOIN users AS u ON u.username = m.from_username
+    WHERE to_username = $1
+  `, [username])
+
+  let messages = result.rows.map(m => {
+    return {
+    id:m.id, 
+    from_user:{username:m.username, first_name:m.first_name, last_name:m.last_name, phone:m.phone},
+    body:m.body, 
+    sent_at:m.sent_at, 
+    read_at:m.read_at
+    }
+  })
+  return messages
   }
 }
 
