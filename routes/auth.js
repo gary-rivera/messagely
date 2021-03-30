@@ -14,11 +14,11 @@ router.post('/login', async function(req, res, next) {
 
   if (await User.authenticate(username, password)) {
     //create token
-    let token = jwt.sign(username, SECRET_KEY)
+    let _token = jwt.sign(username, SECRET_KEY)
     User.updateLoginTimestamp(username)
     
     //return token obj
-    return res.json({ token })
+    return res.json({ _token })
 
   } else {
     throw new UnauthorizedError()
@@ -32,9 +32,9 @@ router.post('/login', async function(req, res, next) {
  */
 router.post('/register', async function(req, res, next) {
   let user = await User.register(req.body);
-  let token = jwt.sign(user.username, SECRET_KEY);
+  let _token = jwt.sign(user.username, SECRET_KEY);
 
-  return res.json({ token })
+  return res.json({ _token })
 })
 
 module.exports = router;

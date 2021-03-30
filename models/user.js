@@ -59,6 +59,17 @@ class User {
     `, [username])
   }
 
+  static async updateUserInfo(username, phone) {
+    const result = await db.query(`
+        UPDATE users
+        SET phone = $1
+        WHERE username = $2
+        RETURNING username, first_name, last_name, phone
+    `, [phone, username])
+    const user = result.rows[0];
+    return user
+  }
+
   /** All: basic info on all users:
    * [{username, first_name, last_name}, ...] */
 

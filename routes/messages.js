@@ -6,6 +6,19 @@ const { ensureLoggedIn, ensureCorrectUser } = require("../middleware/auth");
 const Message = require("../models/message")
 const User = require("../models/user") //TODO: delete if unnecessary
 const {UnauthorizedError} = require("../expressError");
+const client = require("../models/sms");
+
+
+router.get('/sms', async function(req, res, next){
+  await client.messages.create({
+    body: 'Hello from Node',
+    to: '+13525145609',  // Text this number
+    from: '+14159913084' // From a valid Twilio number
+})
+.then((message) => console.log(message.sid));
+return res.json({message:"success!"})
+})
+
 
 /** GET /:id - get detail of message.
  *
@@ -65,6 +78,7 @@ router.post('/:id/read', ensureLoggedIn, async function(req, res, next) {
    
   throw new UnauthorizedError()
 })
+
 
 
 module.exports = router;
