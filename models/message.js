@@ -4,6 +4,9 @@
 
 const { NotFoundError } = require("../expressError");
 const db = require("../db");
+const { client, twilioPhone } = require("../config");
+
+
 
 /** Message on the site. */
 
@@ -24,7 +27,26 @@ class Message {
              RETURNING id, from_username, to_username, body, sent_at`,
         [from_username, to_username, body]);
 
+        
     return result.rows[0];
+  }
+
+  /** sms logic for message*/
+
+  static async sms(to_username) {
+    const result = await db.query(`
+      SELECT username, phone, first_name
+      FROM users
+      WHERE username = $1
+    `, [to_username])
+    const recipient = result.rows[0];
+
+    await client.messages.create({
+      body: `You have a new message on Messagely!`,
+      to: `${recipient.phone}`,  // Text this number
+      from: twilioPhone // From a valid Twilio number
+    })
+    .then((message) => console.log(message.sid));
   }
 
   /** Update read_at for message */

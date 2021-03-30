@@ -4,21 +4,7 @@ const Router = require("express").Router;
 const router = new Router();
 const { ensureLoggedIn, ensureCorrectUser } = require("../middleware/auth");
 const Message = require("../models/message")
-const User = require("../models/user") //TODO: delete if unnecessary
 const {UnauthorizedError} = require("../expressError");
-const client = require("../models/sms");
-
-
-router.get('/sms', async function(req, res, next){
-  await client.messages.create({
-    body: 'Hello from Node',
-    to: '+13525145609',  // Text this number
-    from: '+14159913084' // From a valid Twilio number
-})
-.then((message) => console.log(message.sid));
-return res.json({message:"success!"})
-})
-
 
 /** GET /:id - get detail of message.
  *
@@ -34,7 +20,6 @@ return res.json({message:"success!"})
  **/
 router.get('/:id', ensureLoggedIn, async function(req, res, next) {
   let m = await Message.get(req.params.id)
-  console.log('global user is ', res.locals.user);
 
   if (res.locals.user === m.from_user || res.locals.user === m.to_user) {
     return res.json({message: m})
@@ -53,7 +38,9 @@ router.post('/', ensureLoggedIn, async function(req, res, next) {
   let { to_username, body } = req.body
   
   let message = await Message.create({'from_username':res.locals.user, to_username, body})  
-  
+
+  await Message.sms(to_username)
+
   return res.json({ message })
 })
 
@@ -66,11 +53,9 @@ router.post('/', ensureLoggedIn, async function(req, res, next) {
  *
  **/
 router.post('/:id/read', ensureLoggedIn, async function(req, res, next) {
-  console.log("hit route");
   
   let messageInfo = await Message.get(req.params.id);
-  console.log("messageInfo.to_user", messageInfo.to_user);
-  console.log("localUser", res.locals.user)
+
   if (res.locals.user === messageInfo.to_user.username) {
     let message = await Message.markRead(req.params.id);
     return res.json({message})  

@@ -29,7 +29,6 @@ return res.json({ user })
 })
 
 router.post('/:username/update', ensureCorrectUser, async function(req, res, next) {
-  console.log("update route");
   let phone = req.body.phone
   let username = req.params.username
   let user = await User.updateUserInfo(username, phone)
